@@ -82,3 +82,34 @@ form.addEventListener('submit', e => {
 });
 form.addEventListener('input', e => { e.target.removeAttribute('aria-invalid'); document.getElementById('form-error').textContent = ''; });
 document.querySelector('.back-button').addEventListener('click', () => { preview.hidden = true; form.hidden = false; form.elements.city.focus(); });
+
+// A local visual interaction. It never sends data or attempts to reproduce a physical material test.
+const filmRange = document.getElementById('film-range');
+const filmOutput = document.getElementById('film-output');
+const phoneArt = document.getElementById('phone-art');
+const materialStage = document.getElementById('material-stage');
+function showFilm(value) {
+  const progress = Number(value) / 100;
+  phoneArt.style.setProperty('--peel-opacity', String(1 - progress));
+  phoneArt.style.setProperty('--flat-opacity', String(progress));
+  filmOutput.textContent = `${value}%`;
+  filmRange.setAttribute('aria-valuetext', Number(value) === 100 ? 'Плёнка нанесена' : `Нанесение плёнки: ${value}%`);
+}
+if (filmRange && phoneArt) {
+  filmRange.addEventListener('input', () => showFilm(filmRange.value));
+  showFilm(filmRange.value);
+  if (!reducedMotion && window.matchMedia('(hover:hover) and (pointer:fine)').matches) {
+    let frame = 0;
+    materialStage.addEventListener('pointermove', event => {
+      if (frame) cancelAnimationFrame(frame);
+      const rect = materialStage.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width - .5) * 16;
+      const y = ((event.clientY - rect.top) / rect.height - .5) * 12;
+      frame = requestAnimationFrame(() => { phoneArt.style.transform = `translate3d(${x}px,${y}px,0) rotate(${-7 + x / 4}deg)`; });
+    });
+    materialStage.addEventListener('pointerleave', () => {
+      if (frame) cancelAnimationFrame(frame);
+      phoneArt.style.transform = '';
+    });
+  }
+}
